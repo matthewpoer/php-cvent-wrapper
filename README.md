@@ -43,6 +43,9 @@ try {
   if(!$result) {
     die('Cvent authentication failed for an unknown reason' . PHP_EOL);
   }
+} catch (\CventAuthorizationFailureException | \CventAuthorizationLockoutException $e) {
+  echo 'Cvent Auth Error: ' . $e->getMessage();
+  die();
 } catch (\Exception $e) {
   echo 'Failed to authenticate with Cvent' . PHP_EOL;
   echo $e->getMessage();

@@ -236,6 +236,12 @@ class php_cvent_wrapper {
       $this->ServerURL = $result->LoginResult->ServerURL . '?WSDL';
       return TRUE;
     }
+    elseif(isset($result->LoginResult->ErrorMessage) && $result->LoginResult->ErrorMessage == 'Access is denied.') {
+      throw new CventAuthorizationFailureException('Access is denied. Please check your Account Number, Username, Password and that your request is coming from an approved IP address');
+    }
+    elseif(isset($result->LoginResult->ErrorMessage) && $result->LoginResult->ErrorMessage == 'Your account has been locked out. Please contact Customer care or wait for 30 minutes') {
+      throw new CventAuthorizationLockoutException('Account Locked');
+    }
     elseif(isset($result->LoginResult->ErrorMessage)) {
       $message = 'Error authenticating with Cvent. An error message was found.' . PHP_EOL;
       $message .= 'Error Message: ' . $result->LoginResult->ErrorMessage . PHP_EOL;
@@ -249,3 +255,6 @@ class php_cvent_wrapper {
   }
 
 }
+
+class CventAuthorizationFailureException extends Exception {}
+class CventAuthorizationLockoutException extends Exception {}
