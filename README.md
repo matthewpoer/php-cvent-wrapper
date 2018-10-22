@@ -55,6 +55,17 @@ try {
 echo "Authentication was successful." . PHP_EOL;
 ```
 
+### Get a List of Fields for an Object
+```
+try {
+  $fields = $php_cvent_wrapper->describe_object_fields('Registration');
+} catch (\Exception $e) {
+  echo 'Failed to get fields list' . PHP_EOL;
+  echo $e->getMessage();
+  die();
+}
+```
+
 ### Search
 ```
 try {

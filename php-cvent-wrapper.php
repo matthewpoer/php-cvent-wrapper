@@ -259,6 +259,36 @@ class php_cvent_wrapper {
     throw new Exception($message);
   }
 
+  /**
+   * @param string $CvObject array of Cvent Object names
+   * @return array
+   */
+  public function describe_object($CvObject) {
+    $result = $this->_call('DescribeCvObject', array(
+      'DescribeCvObject' => array(
+        'ObjectTypes' => array(
+          $CvObject
+        )
+      )
+    ));
+    return $result->DescribeCvObjectResult->DescribeCvObjectResult;
+  }
+
+  /**
+   * @param string $CvObject to get fields for
+   * @param bool $custom_only just look for custom fields, otherwise will get
+   *        all fields
+   * @return array normalized list of fields
+   */
+  public function describe_object_fields($CvObject, $custom_only = FALSE) {
+    $describe_object = $this->describe_object($CvObject);
+    $fields = array();
+    foreach($describe_object->Field as $field) {
+      $fields[] = $field->Name;
+    }
+    return $fields;
+  }
+
 }
 
 class CventAuthorizationFailureException extends Exception {}
