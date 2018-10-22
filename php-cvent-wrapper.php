@@ -168,7 +168,12 @@ class php_cvent_wrapper {
     foreach($results as $result_single) {
       $return[$result_single->Id] = array();
       foreach($Fields as $field) {
-        $return[$result_single->Id][$field] = $result_single->$field;
+        // If the requested field is not found on the retrieved object, assume
+        // it is blank.
+        $return[$result_single->Id][$field] = '';
+        if(isset($result_single->$field) && !empty($result_single->$field)) {
+          $return[$result_single->Id][$field] = $result_single->$field;
+        }
       }
     }
     return $return;
