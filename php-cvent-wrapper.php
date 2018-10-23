@@ -276,11 +276,9 @@ class php_cvent_wrapper {
 
   /**
    * @param string $CvObject to get fields for
-   * @param bool $custom_only just look for custom fields, otherwise will get
-   *        all fields
    * @return array normalized list of fields
    */
-  public function describe_object_fields($CvObject, $custom_only = FALSE) {
+  public function describe_object_fields($CvObject) {
     $describe_object = $this->describe_object($CvObject);
     $fields = array();
     foreach($describe_object->Field as $field) {
