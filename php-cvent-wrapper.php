@@ -168,6 +168,8 @@ class php_cvent_wrapper {
     foreach($results as $result_single) {
       $return[$result_single->Id] = array();
       foreach($Fields as $field) {
+        // if we have an empty field reference, just skip it
+        if(empty($field)) continue;
         // If the requested field is not found on the retrieved object, assume
         // it is blank.
         $return[$result_single->Id][$field] = '';
