@@ -66,7 +66,7 @@ try {
 }
 ```
 
-### Search
+### Filtered Search
 ```
 try {
   $users = $php_cvent_wrapper->search(
@@ -85,6 +85,22 @@ try {
   }
 } catch (\Exception $e) {
   echo 'Failed to search for a list of Administrators' . PHP_EOL;
+  echo $e->getMessage();
+  die();
+}
+```
+
+#### Search Without Filters
+The same search method can be used with no filters as well, e.g. to get a list of all known Speakers:
+```
+try {
+  $speakers = $php_cvent_wrapper->search('Speaker');
+  echo "Here's a list of all of the Speaker IDs:" . PHP_EOL;
+  foreach ($speakers as $speaker_id) {
+    echo 'Speaker ID is ' . $speaker_id . PHP_EOL;
+  }
+} catch (\Exception $e) {
+  echo 'Failed to search for a list of Speakers' . PHP_EOL;
   echo $e->getMessage();
   die();
 }
@@ -115,7 +131,6 @@ try {
 
 ### Search and Retrieve in a Single Call
 ```
-//
 try {
   $events = $php_cvent_wrapper->search_and_retrieve(
     'Event',
