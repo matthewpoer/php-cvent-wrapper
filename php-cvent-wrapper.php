@@ -278,13 +278,19 @@ class php_cvent_wrapper {
 
   /**
    * @param string $CvObject to get fields for
+   * @param bool $include_custom Include Custom Fields (optional, default true)
    * @return array normalized list of fields
    */
-  public function describe_object_fields($CvObject) {
+  public function describe_object_fields($CvObject, $include_custom = TRUE) {
     $describe_object = $this->describe_object($CvObject);
     $fields = array();
     foreach($describe_object->Field as $field) {
       $fields[] = $field->Name;
+    }
+    if($include_custom && !empty($describe_object->CustomField)) {
+      foreach($describe_object->CustomField as $field) {
+        $fields[] = $field->Name;
+      }
     }
     return $fields;
   }
