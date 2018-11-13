@@ -167,15 +167,40 @@ class php_cvent_wrapper {
     $return = array();
     foreach($results as $result_single) {
       $return[$result_single->Id] = array();
+
+      // ensure CustomFieldDetail is always an array; it will be for any Cvent
+      // object with more than one custom field, but I suspect that if only one
+      // custom field is set up then it would be treated differently
+      if(isset($result_single->CustomFieldDetail) && !is_array($result_single->CustomFieldDetail)) {
+        $result_single->CustomFieldDetail = array($result_single->CustomFieldDetail);
+      }
+
       foreach($Fields as $field) {
         // if we have an empty field reference, just skip it
         if(empty($field)) continue;
-        // If the requested field is not found on the retrieved object, assume
-        // it is blank.
+
+        // If the requested field is not found on the retrieved object, we
+        // will just assume it is blank
         $return[$result_single->Id][$field] = '';
+
+        // Check standard fields for a match. Standard fields are params. on the
+        // object
         if(isset($result_single->$field) && !empty($result_single->$field)) {
           $return[$result_single->Id][$field] = $result_single->$field;
         }
+
+        // if still blank, perhaps it's a custom field? We have to check each
+        // one for a match because custom fields are placed in their own array
+        // on the object, and each element contains information about the custom
+        // field (i.e. not just the value)
+        if(empty($return[$result_single->Id][$field]) && !empty($result_single->CustomFieldDetail)) {
+          foreach($result_single->CustomFieldDetail as $cvent_custom_field) {
+            if($field == $cvent_custom_field->FieldName) {
+              $return[$result_single->Id][$field] = $cvent_custom_field->FieldValue;
+            }
+          }
+        }
+
       }
     }
     return $return;
