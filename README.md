@@ -157,3 +157,43 @@ try {
   die();
 }
 ```
+
+### Search using Includes (i.e. multiple values)
+The following will find a list of Active and Completed events that have been
+modified in the past week. Notice that the filter uses `ValueArray` instead of
+just `Value`.
+```
+try {
+  $events = $php_cvent_wrapper->search_and_retrieve(
+    'Event',
+    array(
+      (object)array(
+        'Field' => 'LastModifiedDate',
+        'Operator' => 'Greater than',
+        'Value' => date('Y-m-d\TH:m:s', strtotime('-1 week')),
+      ),
+      (object)array(
+        'Field' => 'EventStatus',
+        'Operator' => 'Includes',
+        'ValueArray' => array(
+          'Active',
+          'Completed',
+        )
+      ),
+    ),
+    array(
+      'EventCode',
+      'EventStartDate',
+      'EventTitle',
+      'Id',
+    )
+  );
+  foreach($events as $event) {
+    echo 'Event ' . $event['EventTitle'] . ' will begin on ' . $event['EventStartDate'] . PHP_EOL;
+  }
+} catch (\Exception $e) {
+  echo 'Failed to search and retrieve info. for recently modified active and completed events' . PHP_EOL;
+  echo $e->getMessage();
+  die();
+}
+```
