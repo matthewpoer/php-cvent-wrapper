@@ -17,7 +17,7 @@ class php_cvent_wrapper {
     $this->wsdl = ($sandbox) ? $this->sandbox_wsdl : $this->production_wsdl;
   }
 
-  private function _call($method, $params) {
+  private function _call($method, $params, $throw_fault = FALSE) {
     try {
       $url = empty($this->ServerURL) ? $this->wsdl : $this->ServerURL;
       $this->SoapClient = new SoapClient($url, $this->SoapClientOptions);
@@ -26,14 +26,24 @@ class php_cvent_wrapper {
         $header = new SoapHeader('http://api.cvent.com/2006-11', 'CventSessionHeader', $header_body);
         $this->SoapClient->__setSoapHeaders($header);
       }
-      return $this->SoapClient->__soapCall($method, $params);
+      $result = $this->SoapClient->__soapCall($method, $params);
+
+      // want to simulate a SoapFault? probably not, but nice for testing
+      if($throw_fault) throw new SoapFault('q0:CV10000', 'UNKNOWN_EXCEPTION');
+
+      return $result;
     } catch (\SoapFault $fault) {
       $message = 'Error with Cvent API. Exception occurred.' . PHP_EOL;
       $message .= 'faultcode: ' . $fault->faultcode . PHP_EOL;
       $message .= 'Code: ' . $fault->getCode() . PHP_EOL;
       $message .= 'Message: ' . $fault->getMessage() . PHP_EOL;
-      $message .= 'Sent Headers: ' . PHP_EOL . $this->SoapClient->__getLastRequestHeaders();
-      $message .= 'Sent Request: ' . PHP_EOL . $this->SoapClient->__getLastRequest();
+
+      // if we have Request headers and data, add to the message
+      if($this->SoapClient) {
+        $message .= 'Sent Headers: ' . PHP_EOL . $this->SoapClient->__getLastRequestHeaders();
+        $message .= 'Sent Request: ' . PHP_EOL . $this->SoapClient->__getLastRequest();
+      }
+
       throw new Exception($message);
     }
   }
@@ -251,18 +261,27 @@ class php_cvent_wrapper {
    * @link https://developers.cvent.com/documentation/soap-api/call-definitions/authentication/login/
    */
   public function login($account_number, $username, $password) {
-    $result = $this->_call('Login', array(
-      'Login' => array(
-        'AccountNumber' => $account_number,
-        'UserName' => $username,
-        'Password' => $password
-      )
-    ));
+
+    $error_message = '';
+    try {
+      $result = $this->_call('Login', array(
+        'Login' => array(
+          'AccountNumber' => $account_number,
+          'UserName' => $username,
+          'Password' => $password
+        )
+      ));
+    } catch (\SoapFault $e) {
+      $error_message = $e->getMessage();
+    } catch (\Exception $e) {
+      $error_message = $e->getMessage();
+    }
 
     if(
       isset($result->LoginResult->LoginSuccess)
       && isset($result->LoginResult->CventSessionHeader)
       && $result->LoginResult->LoginSuccess
+      && empty($error_message)
     ) {
       $this->CventSessionHeader = $result->LoginResult->CventSessionHeader;
       $this->ServerURL = $result->LoginResult->ServerURL . '?WSDL';
@@ -275,15 +294,19 @@ class php_cvent_wrapper {
       throw new CventAuthorizationLockoutException('Account Locked');
     }
     elseif(isset($result->LoginResult->ErrorMessage)) {
-      $message = 'Error authenticating with Cvent. An error message was found.' . PHP_EOL;
-      $message .= 'Error Message: ' . $result->LoginResult->ErrorMessage . PHP_EOL;
+      $error_message .= 'Error authenticating with Cvent. An error message was found.' . PHP_EOL;
+      $error_message .= 'Error Message: ' . $result->LoginResult->ErrorMessage . PHP_EOL;
     }
-    else {
-      $message = 'Error authenticating with Cvent. No error message was received.' . PHP_EOL;
+    elseif(empty($error_message)) {
+      $error_message .= 'Error authenticating with Cvent. No error message was received.' . PHP_EOL;
     }
-    $message .= 'Sent Headers: ' . PHP_EOL . $this->SoapClient->__getLastRequestHeaders();
-    $message .= 'Sent Request: ' . PHP_EOL . $this->SoapClient->__getLastRequest();
-    throw new Exception($message);
+
+    // scrub sensitive account info. from the error message so it doesn't get
+    // sent to logging systems
+    $scrub = array($account_number, $username, $password);
+    $error_message = str_replace($scrub, '[REDACTED]', $error_message);
+
+    throw new Exception($error_message);
   }
 
   /**
