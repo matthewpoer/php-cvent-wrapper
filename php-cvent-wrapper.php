@@ -211,6 +211,45 @@ class php_cvent_wrapper {
           }
         }
 
+        // if still blank, perhaps it's the Answers set to a Registration
+        // object? These questions and answers are somewhat unorganized and
+        // difficult to sort through, but if they are present we will format
+        // them in the form of large text field that specifies the question and
+        // response to each entry. Answers with multiple responses will be
+        // joined by a comma (CSV), and newlines will be used generously to
+        // separate each question.
+        if(
+          empty($return[$result_single->Id][$field])
+          && !empty($result_single->EventSurveyDetail)
+          && $field == 'Answer'
+        ) {
+          foreach($result_single->EventSurveyDetail as $EventSurveyDetail) {
+
+            // the actual content of the answer is formatted a bit differently
+            // for single responses vs. multiple.
+            $answer = '';
+            if(is_array($EventSurveyDetail->Answer)) {
+              foreach($EventSurveyDetail->Answer as $answer_text) {
+                $answer .= $answer_text->AnswerText . ', ';
+              }
+              $answer = substr($answer, 0, -2);
+            }
+            elseif(!empty($EventSurveyDetail->Answer->AnswerText)) {
+              $answer = $EventSurveyDetail->Answer->AnswerText;
+            }
+
+            // build the text block for this
+            $return[$result_single->Id][$field] .= 'Question:' . PHP_EOL
+              . $EventSurveyDetail->QuestionText . PHP_EOL
+              . 'Response:' . PHP_EOL
+              . $answer . PHP_EOL . PHP_EOL;
+          }
+
+          // drop trailing newline from answers text block
+          $return[$result_single->Id][$field] = trim($return[$result_single->Id][$field]);
+        }
+
+
       }
     }
     return $return;
