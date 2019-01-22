@@ -228,7 +228,7 @@ class php_cvent_wrapper {
             // the actual content of the answer is formatted a bit differently
             // for single responses vs. multiple.
             $answer = '';
-            if(is_array($EventSurveyDetail->Answer)) {
+            if(!empty($EventSurveyDetail->Answer) && is_array($EventSurveyDetail->Answer)) {
               foreach($EventSurveyDetail->Answer as $answer_text) {
                 $answer .= $answer_text->AnswerText . ', ';
               }
