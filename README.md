@@ -197,3 +197,57 @@ try {
   die();
 }
 ```
+
+### Registration Questions
+Registration Questions are stored as objects within the Registration object, and so these can be "flattened" out into a single field and/or converted to an array for more granular processing. Note that the 5th param. in `search_and_retrieve()` sets the 4th param. in `search()`, which is the `$always_flat` flag. It defaults to TRUE (assuming that most of the time one would not want an array in the otherwise-flat record data), but when set to FALSE registration data is returned as an array.
+```
+// `$always_flat` is the 4th param in retrieve
+$registrations = $php_cvent_wrapper->retrieve(
+  'Registration',
+  $Ids,
+  $Fields,
+  FALSE
+);
+
+// `$always_flat` is the 5th param in search_and_retrieve
+$registrations = $php_cvent_wrapper->search_and_retrieve(
+  'Registration',
+  $Filters,
+  $Fields,
+  'AndSearch'
+  FALSE
+);
+```
+
+The returned data will include the Answer as text regardless of whether `$always_flat` is true or false, so dumping the `$registration['Answer']` as below will give the following output:
+
+```
+$registration = current(registrations);
+var_dump($registration['Answer']);
+/*
+string(204) "Question:
+Here is an example event question (001)
+Response:
+Here is a response to the question (001)
+
+Question:
+Here is an another example event question (002)
+Response:
+And here is another response (002)"
+*/
+```
+
+But if `$always_flat` is set to false, you can dump an additional array for potentially easier question separation:
+
+```
+$registration = current(registrations);
+var_dump($registration['Answer Array']);
+/*
+array(2) {
+  ["Here is an example event question (001)"]=>
+  string(40) "Here is a response to the question (001)"
+  ["Here is an another example event question (002)"]=>
+  string(47) "Here is an another example event question (002)"
+}
+*/
+```

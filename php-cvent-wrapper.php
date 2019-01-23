@@ -151,9 +151,13 @@ class php_cvent_wrapper {
    * @param string $ObjectType
    * @param string|array $Ids can be a single-record Id string or array of several Id values
    * @param array $Fields Id will always be included, it's also the default
+   * @param bool $always_flat Ensures that the return array is always a "flat"
+   *        associative array. Set to false to allow Registration Questions to
+   *        provide an additional array of questions and answers within the
+   *        primary record data array
    * @return array associative array of results, with record Ids for keys
    */
-  public function retrieve($ObjectType, $Ids, $Fields = array('Id')) {
+  public function retrieve($ObjectType, $Ids, $Fields = array('Id'), $always_flat = TRUE) {
 
     // we always want to grab the Id because we'll be building an associative
     // array for the result set
@@ -214,15 +218,21 @@ class php_cvent_wrapper {
         // if still blank, perhaps it's the Answers set to a Registration
         // object? These questions and answers are somewhat unorganized and
         // difficult to sort through, but if they are present we will format
-        // them in the form of large text field that specifies the question and
-        // response to each entry. Answers with multiple responses will be
-        // joined by a comma (CSV), and newlines will be used generously to
-        // separate each question.
+        // them both as a large text field that specifies the question and
+        // response to each entry (for human consumption) _and_ as an array that
+        // can be more easily processed and reported on. Answers with multiple
+        // responses will always be joined by a comma (CSV).
         if(
           empty($return[$result_single->Id][$field])
           && !empty($result_single->EventSurveyDetail)
           && $field == 'Answer'
         ) {
+
+          // set up the array portion of the answer set
+          if(!$always_flat) {
+            $return[$result_single->Id][$field . ' Array'] = array();
+          }
+
           foreach($result_single->EventSurveyDetail as $EventSurveyDetail) {
 
             // the actual content of the answer is formatted a bit differently
@@ -243,6 +253,12 @@ class php_cvent_wrapper {
               . $EventSurveyDetail->QuestionText . PHP_EOL
               . 'Response:' . PHP_EOL
               . $answer . PHP_EOL . PHP_EOL;
+
+            if(!$always_flat) {
+              // build the answer as an array as well
+              $return[$result_single->Id][$field . ' Array'][$EventSurveyDetail->QuestionText] = $answer;
+            }
+
           }
 
           // drop trailing newline from answers text block
@@ -282,11 +298,12 @@ class php_cvent_wrapper {
    * @see search()
    * @see retrieve()
    */
-  public function search_and_retrieve($ObjectType, $Filter = array(), $Fields, $SearchType = 'AndSearch') {
+  public function search_and_retrieve($ObjectType, $Filter = array(), $Fields, $SearchType = 'AndSearch', $always_flat = TRUE) {
     return $this->retrieve(
       $ObjectType,
       $this->search($ObjectType, $Filter, $SearchType),
-      $Fields
+      $Fields,
+      $always_flat
     );
   }
 
