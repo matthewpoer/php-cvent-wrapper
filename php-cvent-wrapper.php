@@ -240,9 +240,21 @@ class php_cvent_wrapper {
             $answer = '';
             if(!empty($EventSurveyDetail->Answer) && is_array($EventSurveyDetail->Answer)) {
               foreach($EventSurveyDetail->Answer as $answer_text) {
-                $answer .= $answer_text->AnswerText . ', ';
+                if(!empty($answer_text->AnswerText)) {
+                  $answer .= $answer_text->AnswerText . ', ';
+                }
+                if(!empty($answer_text->AnswerPart)) {
+                  $answer .= $answer_text->AnswerPart . ': ';
+                  if(!empty($answer_text->AnswerOther)) {
+                    $answer .= $answer_text->AnswerOther;
+                  }
+                }
               }
-              $answer = substr($answer, 0, -2);
+
+              // drop trailing comma
+              if(substr($answer, -2) == ', ') {
+                $answer = substr($answer, 0, -2);
+              }
             }
             elseif(!empty($EventSurveyDetail->Answer->AnswerText)) {
               $answer = $EventSurveyDetail->Answer->AnswerText;
