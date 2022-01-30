@@ -2,7 +2,7 @@
 class php_cvent_wrapper {
 
   private $production_wsdl = 'https://api.cvent.com/soap/V200611.ASMX?WSDL';
-  private $sandbox_wsdl = 'https://sandbox-api.cvent.com/soap/V200611.ASMX?WSDL';
+  private $eu_wsdl = 'https://api-eur.cvent.com/SOAP/V200611.ASMX?wsdl';
   private $wsdl = '';
   private $SoapClient = NULL;
   private $SoapClientOptions = array(
@@ -13,8 +13,8 @@ class php_cvent_wrapper {
   private $CventSessionHeader = NULL;
   private $ServerURL = NULL;
 
-  public function __construct($sandbox = FALSE) {
-    $this->wsdl = ($sandbox) ? $this->sandbox_wsdl : $this->production_wsdl;
+  public function __construct($eu = FALSE) {
+    $this->wsdl = ($eu) ? $this->eu_wsdl : $this->production_wsdl;
   }
 
   private function _call($method, $params, $throw_fault = FALSE) {
